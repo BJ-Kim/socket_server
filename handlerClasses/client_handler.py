@@ -37,6 +37,7 @@ class ClientHandler(threading.Thread):
                     singleDatas.clientOut(self.client)
                     print singleDatas.clients
                     self.broadcast(bytes("%s has left the chat." % name))
+                    curr_thread._Thread__stop()
                     break
             else:
                 if not msg:
@@ -45,6 +46,7 @@ class ClientHandler(threading.Thread):
                     singleDatas.clientOut(self.client)
                     print singleDatas.clients
                     self.broadcast(bytes("%s has left the chat." % name))
+                    curr_thread._Thread__stop()
                     break
                 else:
                     self.broadcast(msg, name+": ")
