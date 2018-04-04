@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import sys
-import time
-import datetime
 from socket import *
 from threading import Thread
+from multiprocessing import Process, Queue
+import multiprocessing
 import threading
 import SocketServer
 import select
@@ -15,32 +15,36 @@ clients = {}
 addresses = {}
 
 
-class SocketHandler(threading.Thread):
+class SocketHandler(Process):
     def __init__(self, sock):
+        super(SocketHandler, self).__init__()
         self.server_sock = sock
-        threading.Thread.__init__(self)
+        if not shared_state:
+            with shared_state_lock:
+                shared_state['x'] = 1
+        else:
+            print("already initalizedd")
+        # threading.Thread.__init__(self)
 
     def run(self):
-        print "hihi"
-        # while connection_list:
-        connectData = ConnectionDatas.instance()
+        # connectData = ConnectionDatas.instance()
+        with shared_state_lock:
+            print shared_state['connection']
+            connectData = shared_state['connection_data']
         while connectData.connection_list:
             try:
                 # read_socket, write_socket, error_socket = select.select(connection_list, [], [], 10)
                 read_socket, write_socket, error_socket = select.select(connectData.connection_list, [], [], 10)
-                curr_thread = threading.current_thread()
-                print curr_thread.name
-                print "start" + str(datetime.datetime.now())
-                time.sleep(3)
-                print "finish" + str(datetime.datetime.now())
+                # curr_thread = threading.current_thread()
+                # print curr_thread.name
+                curr_process = multiprocessing.current_process()
+                print curr_process.name
 
                 for sock in read_socket:
                     if sock == self.server_sock:
                         clientSocket, addr_info = self.server_sock.accept()
                         # connection_list.append(clientSocket)
                         connectData.clientAdd(clientSocket, None)
-                        # print "new user"
-                        print connectData.connection_list
 
                         # for socket_in_list in connection_list:
                         for socket_in_list in connectData.connection_list:
@@ -54,13 +58,13 @@ class SocketHandler(threading.Thread):
                     else:
                         data = sock.recv(1024)
                         if data:
-                            # print "new data good"
-                            print data
+                            print "new data good"
+                            # print data
                         else:
                             # connection_list.remove(sock)
                             connectData.clientOut(sock)
                             sock.close()
-                            print "bye user"
+                            # print "bye user"
             except KeyboardInterrupt:
                 self.server_sock.close()
                 sys.exit()
@@ -68,32 +72,47 @@ class SocketHandler(threading.Thread):
 if __name__ == "__main__":
     HOST, PORT = "localhost", 1198
 
+    shared_state = multiprocessing.Manager().dict()
+    shared_state_lock = multiprocessing.Lock()
+
     server_sock = socket(AF_INET, SOCK_STREAM)
-    server_sock.setblocking(0)
     server_sock.bind((HOST, PORT))
     server_sock.listen(3)
 
-    # print "waiting connection"
+    print "waiting connection"
     connection_list = [server_sock]
     connectData = ConnectionDatas.instance()
     connectData.clientAdd(server_sock,None)
+    # with shared_state_lock:
+    #     shared_state['connection_data'] = connectData
+    #     shared_state['connection'] = {}
 
-    SERVER_THREAD = SocketHandler(server_sock)
+    # SERVER_THREAD = SocketHandler(server_sock)
     # SERVER_THREAD2 = SocketHandler(server_sock)
     # SERVER_THREAD3 = SocketHandler(server_sock)
+    SERVER_PROCESS = SocketHandler(server_sock)
+    SERVER_PROCESS2 = SocketHandler(server_sock)
     try:
-        SERVER_THREAD.setDaemon(True)
+        # SERVER_THREAD.setDaemon(True)
         # SERVER_THREAD2.setDaemon(True)
         # SERVER_THREAD3.setDaemon(True)
-        SERVER_THREAD.start()
+        SERVER_PROCESS.daemon = True
+        SERVER_PROCESS2.daemon = True
+        # SERVER_THREAD.start()
         # SERVER_THREAD2.start()
         # SERVER_THREAD3.start()
-        SERVER_THREAD.join()
+        SERVER_PROCESS.start()
+        SERVER_PROCESS2.start()
+        # SERVER_THREAD.join()
         # SERVER_THREAD2.join()
         # SERVER_THREAD3.join()
+        SERVER_PROCESS.join()
+        SERVER_PROCESS2.join()
     except KeyboardInterrupt:
-        SERVER_THREAD._Thread__stop()
-        sock.close()
+        SERVER_PROCESS.terminate()
+        SERVER_PROCESS2.terminate()
+        # SERVER_THREAD._Thread__stop()
+        server_sock.close()
         sys.exit(0)
 
 

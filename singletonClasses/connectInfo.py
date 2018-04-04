@@ -19,6 +19,9 @@ class SingletonInstance:
 class ConnectionDatas(BaseClass, SingletonInstance):
     connection_list = {}
 
+    # def __init__(*args, **kwargs):
+    #     print "init call"
+
     def clientAdd(self, client, name):
         self.connection_list[client] = name
 
