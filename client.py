@@ -18,7 +18,7 @@ if __name__ == "__main__":
             
             ran = uuid.uuid4()
             sock.sendall(bytes(ran))
-            time.sleep(0.0005)
+            time.sleep(0.0001)
 
             # msg = str(sock.recv(1024))
             # print msg
