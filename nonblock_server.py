@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
-import select, socket, sys, Queue
+import select, socket, sys, queue
 from singletonClasses.connectInfo import ConnectionDatas
 
 class SocketHandler:
@@ -45,7 +45,7 @@ class SocketHandler:
                     if s in self.outputs:
                         self.outputs.remove(s)
                 except KeyError as keyErr:
-                    print "key error"
+                    print("key error")
                 else:
                     a = 1 
                     del a
@@ -53,7 +53,7 @@ class SocketHandler:
                     # s.send(next_msg)
         
             for s in exceptional:
-                print "exception"
+                print("exception")
                 # inputs.remove(s)
                 self.connectData.clientOut(s)
                 if s in self.outputs:

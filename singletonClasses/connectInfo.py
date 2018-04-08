@@ -26,5 +26,5 @@ class ConnectionDatas(BaseClass, SingletonInstance):
         self.connection_list[client] = name
 
     def clientOut(self, client):
-        print self.connection_list[client]
+        print(self.connection_list[client])
         del self.connection_list[client]
